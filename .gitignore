@@ -12,7 +12,6 @@ mlruns/
 mlflow.db
 mlflow_runs/
 
-# Models
 models/
 *.pkl
 
