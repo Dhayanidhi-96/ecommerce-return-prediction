@@ -11,4 +11,4 @@ mlflow_runs/
 *.md
 tests/
 .venv/
-.ipynb_checkpoints/
+.ipynb_checkpoints/ 
