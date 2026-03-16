@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+notebooks/
+data/raw/
+mlruns/
+mlflow_runs/
+.env
+*.md
+tests/
+.venv/
+.ipynb_checkpoints/
