@@ -15,6 +15,7 @@ dependencies = [
     "mlflow>=3.10.1",
     "numpy>=2.2.6",
     "pandas>=2.3.3",
+    "python-dotenv>=1.2.2",
     "scikit-learn>=1.7.2",
     "seaborn>=0.13.2",
     "uvicorn>=0.41.0",

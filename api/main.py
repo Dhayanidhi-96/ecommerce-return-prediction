@@ -7,7 +7,17 @@ import joblib
 import time
 import logging
 from api.schema import OrderInput, PredictionOutput, BatchPredictionOutput
+from dotenv import load_dotenv
+import os
 
+# Load environment variables
+load_dotenv()
+
+# Paths from environment
+MODEL_PATH        = os.getenv("MODEL_PATH", "models/best_model.pkl")
+SCALER_PATH       = os.getenv("SCALER_PATH", "models/scaler.pkl")
+FEATURE_COLS_PATH = os.getenv("FEATURE_COLS_PATH", "models/feature_cols.pkl")
+METRICS_PATH      = os.getenv("METRICS_PATH", "models/metrics.json")
 # ─────────────────────────────────────────
 # LOGGING SETUP
 # ─────────────────────────────────────────
@@ -30,11 +40,9 @@ async def lifespan(app: FastAPI):
 
     logger.info("Loading model from pkl files...")
 
-    # Load directly from pkl — works everywhere!
-    import xgboost as xgb
-    model        = joblib.load("models/best_model.pkl")
-    scaler       = joblib.load("models/scaler.pkl")
-    feature_cols = joblib.load("models/feature_cols.pkl")
+    model        = joblib.load(MODEL_PATH)
+    scaler       = joblib.load(SCALER_PATH)
+    feature_cols = joblib.load(FEATURE_COLS_PATH)
 
     logger.info("✅ Model loaded successfully!")
     logger.info(f"✅ Features: {len(feature_cols)}")
@@ -113,25 +121,34 @@ def predict(order: OrderInput):
         raise HTTPException(status_code=500, detail=str(e))
     
 #end point 3
+# ─────────────────────────────────────────
+# ENDPOINT 3 — Batch Prediction (Vectorized)
+# ─────────────────────────────────────────
 @app.post("/predict/batch", response_model=BatchPredictionOutput)
 def predict_batch(orders: list[OrderInput]):
     try:
-        start_time   = time.time()
-        predictions  = []
-        high_risk    = 0
+        start_time = time.time()
 
-        for order in orders:
-            input_df    = prepare_input(order)
-            probability = float(model.predict_proba(input_df)[0][1])
-            prediction  = int(probability >= 0.5)
-            risk_level  = get_risk_level(probability)
+        # ── Vectorized — process ALL orders at once! ──
+        # Build one DataFrame from all orders
+        input_df = pd.DataFrame([order.model_dump() for order in orders])
+        input_df = input_df[feature_cols]
 
+        # Predict ALL at once — much faster!
+        probabilities = model.predict_proba(input_df)[:, 1]
+        predictions   = (probabilities >= 0.5).astype(int)
+
+        # Build results
+        results    = []
+        high_risk  = 0
+
+        for prob, pred in zip(probabilities, predictions):
+            risk_level = get_risk_level(float(prob))
             if risk_level == "High 🔴":
                 high_risk += 1
-
-            predictions.append(PredictionOutput(
-                is_return          = prediction,
-                return_probability = round(probability, 4),
+            results.append(PredictionOutput(
+                is_return          = int(pred),
+                return_probability = round(float(prob), 4),
                 risk_level         = risk_level
             ))
 
@@ -141,31 +158,31 @@ def predict_batch(orders: list[OrderInput]):
                    f"Time: {response_time:.2f}ms")
 
         return BatchPredictionOutput(
-            predictions      = predictions,
-            total_orders     = len(orders),
-            high_risk_count  = high_risk
+            predictions     = results,
+            total_orders    = len(orders),
+            high_risk_count = high_risk
         )
 
     except Exception as e:
-        logger.error(f"Batch prediction error: {str(e)}")
+        logger.error(f"Batch error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    
 # ─────────────────────────────────────────
 # ENDPOINT 4 — Model Info
 # ─────────────────────────────────────────
 @app.get("/model/info")
 def model_info():
+    if os.path.exists(METRICS_PATH):
+        with open(METRICS_PATH, "r") as f:
+            metrics = json.load(f)
+    else:
+        metrics = {"pr_auc": 0.8134}
+
     return {
         "model_name"    : "ReturnPredictor",
         "model_type"    : "XGBoost Classifier",
         "version"       : "1.0.0",
         "features"      : len(feature_cols),
         "feature_names" : feature_cols,
-        "metrics"       : {
-            "pr_auc"    : 0.8134,
-            "recall"    : 0.6911,
-            "f1_score"  : 0.8053,
-            "precision" : 0.9647
-        },
-        "description": "Predicts e-commerce order returns before shipping"
+        "metrics"       : metrics,
+        "description"   : "Predicts e-commerce order returns before shipping"
     }

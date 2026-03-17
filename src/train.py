@@ -4,6 +4,8 @@ import mlflow.lightgbm
 import mlflow.sklearn
 import pandas as pd
 import numpy as np
+import json
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
@@ -18,10 +20,9 @@ warnings.filterwarnings('ignore')
 
 # ─────────────────────────────────────────
 # CONTROL WHAT RUNS
-# Change these flags to control execution
 # ─────────────────────────────────────────
 RUN_EXPERIMENTS = False  # Set True only when you want to train
-REGISTER_MODEL  = False   # Set True only when you want to register
+REGISTER_MODEL  = False  # Set True only when you want to register
 
 # ─────────────────────────────────────────
 # MLFLOW SETUP
@@ -232,9 +233,9 @@ if REGISTER_MODEL:
         order_by=["metrics.pr_auc DESC"]
     )
 
-    best_run = runs[0]
-    best_run_id = best_run.info.run_id
-    best_pr_auc = best_run.data.metrics['pr_auc']
+    best_run        = runs[0]
+    best_run_id     = best_run.info.run_id
+    best_pr_auc     = best_run.data.metrics['pr_auc']
     best_model_name = best_run.data.params['model_name']
 
     print(f"Best model  : {best_model_name}")
@@ -242,21 +243,20 @@ if REGISTER_MODEL:
     print(f"Run ID      : {best_run_id}")
 
     # Register model
-    model_uri = f"runs:/{best_run_id}/model"
+    model_uri  = f"runs:/{best_run_id}/model"
     registered = mlflow.register_model(
         model_uri=model_uri,
         name="ReturnPredictor"
     )
-
     print(f"\n✅ Model registered as 'ReturnPredictor'!")
     print(f"Version: {registered.version}")
 
-    # Save model locally too
+    # Save scaler and feature cols
     joblib.dump(scaler, "models/scaler.pkl")
     joblib.dump(X_train.columns.tolist(), "models/feature_cols.pkl")
     print("✅ Scaler and feature cols saved to models/")
 
-# Set alias instead of stage (MLflow 3.x)
+    # Set champion alias
     client.set_registered_model_alias(
         name="ReturnPredictor",
         alias="champion",
@@ -264,7 +264,22 @@ if REGISTER_MODEL:
     )
     print(f"✅ Version {registered.version} set as 'champion'!")
 
-    # Test loading from registry using alias
+    # ── NEW: Save metrics to JSON ──
+    metrics = {
+        "pr_auc"    : round(best_pr_auc, 4),
+        "recall"    : round(best_run.data.metrics['recall'], 4),
+        "f1_score"  : round(best_run.data.metrics['f1_score'], 4),
+        "precision" : round(best_run.data.metrics['precision'], 4),
+        "accuracy"  : round(best_run.data.metrics['accuracy'], 4),
+        "model_name": best_model_name,
+        "run_id"    : best_run_id
+    }
+    os.makedirs("models", exist_ok=True)
+    with open("models/metrics.json", "w") as f:
+        json.dump(metrics, f, indent=2)
+    print("✅ Metrics saved to models/metrics.json")
+
+    # Test loading from registry
     loaded_model = mlflow.xgboost.load_model(
         "models:/ReturnPredictor@champion"
     )
