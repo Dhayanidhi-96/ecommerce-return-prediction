@@ -222,8 +222,7 @@ uv run python monitoring/evidently_report.py
 ---
 
 ## 🌍 Live Demo
-
-API live at: **http://your-ec2-ip:8000/docs**
+API live at: **http://13.235.248.208:8000/docs**
 
 ---
 
