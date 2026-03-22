@@ -9,6 +9,7 @@ import logging
 from api.schema import OrderInput, PredictionOutput, BatchPredictionOutput
 from dotenv import load_dotenv
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
 load_dotenv()
@@ -59,6 +60,15 @@ app = FastAPI(
     description="Predicts whether an order will be returned before shipping!",
     version="1.0.0",
     lifespan=lifespan
+)
+
+# Allow UI to call API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ─────────────────────────────────────────

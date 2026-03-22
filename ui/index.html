@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ReturnIQ — E-Commerce Return Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --cream: #faf8f3;
+    --warm-white: #ffffff;
+    --ink: #1a1612;
+    --ink-light: #4a443c;
+    --ink-muted: #9a9088;
+    --accent: #c84b2f;
+    --accent-light: #f5e8e4;
+    --accent-mid: #e8a090;
+    --green: #2d6a4f;
+    --green-light: #e8f5ee;
+    --yellow: #e9a925;
+    --yellow-light: #fef9ec;
+    --border: #e8e2d8;
+    --shadow: 0 4px 24px rgba(26,22,18,0.08);
+    --shadow-lg: 0 12px 48px rgba(26,22,18,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(250,248,243,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    padding: 0 2rem;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-brand span { color: var(--accent); }
+  .nav-badge {
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .nav-links { display: flex; gap: 2rem; align-items: center; }
+  .nav-links a {
+    color: var(--ink-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 140px 2rem 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero p {
+    font-size: 1.05rem;
+    color: var(--ink-light);
+    margin-bottom: 2rem;
+    max-width: 480px;
+    line-height: 1.7;
+  }
+  .hero-cta {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover {
+    background: #b03d24;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(200,75,47,0.3);
+  }
+  .btn-secondary {
+    background: white;
+    color: var(--ink);
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink-light);
+    transform: translateY(-1px);
+  }
+
+  /* ── HERO STATS ── */
+  .hero-stats {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+  }
+  .stats-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .stat-item {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.green { color: var(--green); }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .model-badge {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--green-light);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .model-badge-left {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .model-icon {
+    width: 36px; height: 36px;
+    background: var(--green);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1rem;
+  }
+  .model-name { font-weight: 600; font-size: 0.9rem; color: var(--ink); }
+  .model-sub { font-size: 0.75rem; color: var(--ink-muted); }
+  .model-status {
+    background: var(--green);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  /* ── SECTION ── */
+  section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+  .section-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.8rem;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    color: var(--ink);
+    margin-bottom: 1rem;
+  }
+  .section-sub {
+    color: var(--ink-light);
+    font-size: 1rem;
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── PREDICT FORM ── */
+  .predict-wrapper {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  .form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .form-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+  .form-card p {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .form-group input, .form-group select {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--cream);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,75,47,0.1);
+    background: white;
+  }
+  .form-group input::placeholder { color: var(--ink-muted); }
+  .form-actions {
+    margin-top: 1.5rem;
+    display: flex; gap: 1rem;
+  }
+  .btn-predict {
+    flex: 1;
+    background: var(--accent);
+    color: white;
+    padding: 13px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-predict:hover {
+    background: #b03d24;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(200,75,47,0.3);
+  }
+  .btn-predict:disabled {
+    opacity: 0.6; cursor: not-allowed; transform: none;
+  }
+  .btn-reset {
+    background: white;
+    color: var(--ink-light);
+    padding: 13px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-reset:hover { border-color: var(--ink-light); }
+
+  /* ── RESULT CARD ── */
+  .result-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .result-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    display: none;
+    animation: slideIn 0.4s ease;
+  }
+  .result-card.visible { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .result-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+  .result-timestamp {
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+  }
+  .risk-display {
+    text-align: center;
+    padding: 2rem 1rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+  }
+  .risk-display.low { background: var(--green-light); }
+  .risk-display.medium { background: var(--yellow-light); }
+  .risk-display.high { background: var(--accent-light); }
+  .risk-emoji { font-size: 3rem; margin-bottom: 0.5rem; }
+  .risk-level {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    margin-bottom: 0.3rem;
+  }
+  .risk-level.low { color: var(--green); }
+  .risk-level.medium { color: var(--yellow); }
+  .risk-level.high { color: var(--accent); }
+  .risk-prob {
+    font-size: 0.9rem;
+    color: var(--ink-muted);
+  }
+  .prob-bar-wrap {
+    margin-bottom: 1.5rem;
+  }
+  .prob-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .prob-bar-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .prob-bar-fill.low { background: var(--green); }
+  .prob-bar-fill.medium { background: var(--yellow); }
+  .prob-bar-fill.high { background: var(--accent); }
+  .result-verdict {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    line-height: 1.5;
+  }
+
+  /* ── INFO CARDS ── */
+  .info-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .info-card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 1rem;
+  }
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+  }
+  .metric-item {
+    text-align: center;
+    padding: 0.8rem;
+    background: var(--cream);
+    border-radius: 10px;
+  }
+  .metric-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+  .metric-lbl {
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+  }
+  .api-status {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.85rem;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    flex-shrink: 0;
+  }
+  .status-dot.online { background: var(--green); animation: pulse 2s infinite; }
+  .status-dot.offline { background: var(--accent); }
+  .status-text { color: var(--ink-light); }
+
+  /* ── TECH STACK ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+  .tech-item {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem 1rem;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .tech-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+  }
+  .tech-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  .tech-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .tech-desc { font-size: 0.75rem; color: var(--ink-muted); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--ink);
+    color: rgba(255,255,255,0.6);
+    padding: 2.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  footer strong { color: white; }
+  footer a { color: var(--accent-mid); text-decoration: none; }
+
+  /* ── LOADING SPINNER ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── ERROR MSG ── */
+  .error-msg {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    display: none;
+    margin-top: 1rem;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; padding-top: 100px; }
+    .predict-wrapper { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <a href="#" class="nav-brand">Return<span>IQ</span></a>
+  <div class="nav-links">
+    <a href="#predict">Predict</a>
+    <a href="#metrics">Metrics</a>
+    <a href="#stack">Stack</a>
+    <a href="http://localhost:8000/docs" target="_blank">API Docs</a>
+  </div>
+  <span class="nav-badge">Live Demo</span>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">MLOps Pipeline</div>
+    <h1>Predict Returns <em>Before</em> They Ship</h1>
+    <p>An end-to-end machine learning system that identifies high-risk e-commerce orders before dispatch — reducing return costs and improving logistics efficiency.</p>
+    <div class="hero-cta">
+      <a href="#predict" class="btn-primary">
+        🎯 Try the Predictor
+      </a>
+      <a href="https://github.com/Dhayanidhi-96/ecommerce-return-prediction" target="_blank" class="btn-secondary">
+        View on GitHub
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stats-header">Model Performance Dashboard</div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value accent">0.81</div>
+        <div class="stat-label">PR-AUC Score</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value green">96.5%</div>
+        <div class="stat-label">Precision</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">69.1%</div>
+        <div class="stat-label">Recall</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">110K+</div>
+        <div class="stat-label">Orders Trained</div>
+      </div>
+    </div>
+    <div class="model-badge">
+      <div class="model-badge-left">
+        <div class="model-icon">🌲</div>
+        <div>
+          <div class="model-name">XGBoost Classifier</div>
+          <div class="model-sub">Best model · 5 experiments tracked</div>
+        </div>
+      </div>
+      <div class="model-status">Champion</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PREDICT SECTION -->
+<section id="predict">
+  <div class="section-label">Live Prediction</div>
+  <div class="section-title">Analyse an Order</div>
+  <p class="section-sub">Fill in the order details below and get an instant return risk prediction powered by our XGBoost model.</p>
+
+  <div class="predict-wrapper">
+    <!-- FORM -->
+    <div class="form-card">
+      <h3>Order Details</h3>
+      <p>Enter the key attributes of the order to predict return probability.</p>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Price (R$)</label>
+          <input type="number" id="price" placeholder="e.g. 299.99" value="299.99" step="0.01" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>Freight Value (R$)</label>
+          <input type="number" id="freight_value" placeholder="e.g. 25.50" value="25.50" step="0.01" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>Review Score (1-5)</label>
+          <input type="number" id="review_score" placeholder="1 to 5" value="3.5" step="0.1" min="1" max="5"/>
+        </div>
+        <div class="form-group">
+          <label>Seller Avg Review</label>
+          <input type="number" id="seller_avg_review_score" placeholder="1 to 5" value="3.8" step="0.1" min="1" max="5"/>
+        </div>
+        <div class="form-group">
+          <label>Product Weight (g)</label>
+          <input type="number" id="product_weight_g" placeholder="e.g. 800" value="800" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>Product Photos</label>
+          <input type="number" id="product_photos_qty" placeholder="e.g. 3" value="3" min="0" max="50"/>
+        </div>
+        <div class="form-group">
+          <label>Purchase Hour (0-23)</label>
+          <input type="number" id="purchase_hour" placeholder="0 to 23" value="14" min="0" max="23"/>
+        </div>
+        <div class="form-group">
+          <label>Purchase Month (1-12)</label>
+          <input type="number" id="purchase_month" placeholder="1 to 12" value="6" min="1" max="12"/>
+        </div>
+        <div class="form-group">
+          <label>Repeat Customer?</label>
+          <select id="is_repeat_customer">
+            <option value="0">No — First time</option>
+            <option value="1">Yes — Returning</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Weekend Purchase?</label>
+          <select id="is_weekend_purchase">
+            <option value="0">No — Weekday</option>
+            <option value="1">Yes — Weekend</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Customer Order Count</label>
+          <input type="number" id="customer_order_count" value="1" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>Seller Total Orders</label>
+          <input type="number" id="seller_total_orders" value="150" min="1"/>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-predict" id="predictBtn" onclick="predict()">
+          <span id="btnText">🎯 Predict Return Risk</span>
+          <div class="spinner" id="spinner"></div>
+        </button>
+        <button class="btn-reset" onclick="resetForm()">Reset</button>
+      </div>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="result-panel">
+
+      <!-- RESULT CARD -->
+      <div class="result-card" id="resultCard">
+        <div class="result-header">
+          <div class="result-title">Prediction Result</div>
+          <div class="result-timestamp" id="resultTime"></div>
+        </div>
+
+        <div class="risk-display" id="riskDisplay">
+          <div class="risk-emoji" id="riskEmoji">📦</div>
+          <div class="risk-level" id="riskLevel">—</div>
+          <div class="risk-prob" id="riskProb">Return probability: —</div>
+        </div>
+
+        <div class="prob-bar-wrap">
+          <div class="prob-bar-label">
+            <span>Return Probability</span>
+            <span id="probPct">—</span>
+          </div>
+          <div class="prob-bar-track">
+            <div class="prob-bar-fill" id="probBar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="result-verdict" id="resultVerdict">
+          <span>💡</span>
+          <span id="verdictText">—</span>
+        </div>
+      </div>
+
+      <!-- API STATUS -->
+      <div class="info-card">
+        <div class="info-card-title">API Status</div>
+        <div class="api-status">
+          <div class="status-dot" id="statusDot"></div>
+          <div class="status-text" id="statusText">Checking connection...</div>
+        </div>
+      </div>
+
+      <!-- METRICS -->
+      <div class="info-card">
+        <div class="info-card-title">Model Metrics</div>
+        <div class="metrics-row">
+          <div class="metric-item">
+            <div class="metric-val">0.813</div>
+            <div class="metric-lbl">PR-AUC</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-val">0.805</div>
+            <div class="metric-lbl">F1 Score</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-val">0.965</div>
+            <div class="metric-lbl">Precision</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-val">0.691</div>
+            <div class="metric-lbl">Recall</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TECH STACK -->
+<section id="stack">
+  <div class="section-label">Built With</div>
+  <div class="section-title">Technology Stack</div>
+  <p class="section-sub">A complete MLOps pipeline from raw data to live cloud deployment.</p>
+
+  <div class="tech-grid">
+    <div class="tech-item">
+      <div class="tech-icon">🐍</div>
+      <div class="tech-name">Python</div>
+      <div class="tech-desc">Core language</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">🌲</div>
+      <div class="tech-name">XGBoost</div>
+      <div class="tech-desc">ML model</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">📊</div>
+      <div class="tech-name">MLflow</div>
+      <div class="tech-desc">Experiment tracking</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">⚡</div>
+      <div class="tech-name">FastAPI</div>
+      <div class="tech-desc">REST API</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">🐳</div>
+      <div class="tech-name">Docker</div>
+      <div class="tech-desc">Containerization</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">☁️</div>
+      <div class="tech-name">AWS EC2</div>
+      <div class="tech-desc">Cloud deployment</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">🔍</div>
+      <div class="tech-name">Evidently AI</div>
+      <div class="tech-desc">Data monitoring</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">📦</div>
+      <div class="tech-name">Pandas</div>
+      <div class="tech-desc">Data processing</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Built by <strong>Dhayanidhi P</strong> · E-Commerce Return Prediction MLOps Pipeline</p>
+  <p style="margin-top:8px">
+    <a href="https://github.com/Dhayanidhi-96/ecommerce-return-prediction" target="_blank">GitHub</a>
+    &nbsp;·&nbsp;
+    <a href="http://localhost:8000/docs" target="_blank">API Docs</a>
+    &nbsp;·&nbsp;
+    <a href="https://www.linkedin.com/in/dhayanidhi-p" target="_blank">LinkedIn</a>
+  </p>
+</footer>
+
+<script>
+  const API = 'http://localhost:8000';
+
+  // ── Check API Status ──
+  async function checkStatus() {
+    try {
+      const res = await fetch(`${API}/`);
+      if (res.ok) {
+        document.getElementById('statusDot').className = 'status-dot online';
+        document.getElementById('statusText').textContent = 'API is online and ready';
+      } else { throw new Error(); }
+    } catch {
+      document.getElementById('statusDot').className = 'status-dot offline';
+      document.getElementById('statusText').textContent = 'API offline — start the server';
+    }
+  }
+  checkStatus();
+  setInterval(checkStatus, 30000);
+
+  // ── Predict ──
+  async function predict() {
+    const btn = document.getElementById('predictBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // Helper to get float value
+    const f = id => parseFloat(document.getElementById(id).value) || 0;
+    const i = id => parseInt(document.getElementById(id).value) || 0;
+
+    const price = f('price');
+    const freight = f('freight_value');
+
+    const payload = {
+      price: price,
+      freight_value: freight,
+      product_name_lenght: 45.0,
+      product_description_lenght: 500.0,
+      product_photos_qty: f('product_photos_qty'),
+      product_weight_g: f('product_weight_g'),
+      product_length_cm: 30.0,
+      product_height_cm: 20.0,
+      product_width_cm: 15.0,
+      review_score: f('review_score'),
+      freight_ratio: freight / (price + 1),
+      total_order_value: price + freight,
+      product_volume_cm3: 9000.0,
+      price_per_gram: price / (f('product_weight_g') + 1),
+      is_repeat_customer: i('is_repeat_customer'),
+      customer_order_count: i('customer_order_count'),
+      seller_total_orders: i('seller_total_orders'),
+      seller_avg_review_score: f('seller_avg_review_score'),
+      purchase_month: i('purchase_month'),
+      purchase_dayofweek: 2,
+      is_weekend_purchase: i('is_weekend_purchase'),
+      purchase_hour: i('purchase_hour'),
+      category_freq_encoded: 0.045,
+      customer_state_encoded: 0.42,
+      seller_state_encoded: 0.71
+    };
+
+    // Loading state
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    spinner.style.display = 'block';
+    errorMsg.style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+      showResult(data);
+
+    } catch (err) {
+      errorMsg.textContent = '⚠️ Could not connect to API. Make sure the server is running at localhost:8000';
+      errorMsg.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btnText.style.display = 'inline';
+      spinner.style.display = 'none';
+    }
+  }
+
+  // ── Show Result ──
+  function showResult(data) {
+    const card = document.getElementById('resultCard');
+    const prob = data.return_probability;
+    const pct = (prob * 100).toFixed(1);
+
+    // Determine risk class
+    let riskClass, emoji, verdict;
+    if (prob < 0.3) {
+      riskClass = 'low';
+      emoji = '✅';
+      verdict = 'This order has a LOW return risk. Safe to ship without additional intervention.';
+    } else if (prob < 0.6) {
+      riskClass = 'medium';
+      emoji = '⚠️';
+      verdict = 'This order has a MEDIUM return risk. Consider sending a confirmation email or offering exchange options.';
+    } else {
+      riskClass = 'high';
+      emoji = '🚨';
+      verdict = 'This order has a HIGH return risk. Consider flagging for manual review or offering a pre-shipment discount.';
+    }
+
+    // Update UI
+    document.getElementById('riskDisplay').className = `risk-display ${riskClass}`;
+    document.getElementById('riskEmoji').textContent = emoji;
+    document.getElementById('riskLevel').className = `risk-level ${riskClass}`;
+    document.getElementById('riskLevel').textContent = riskClass.charAt(0).toUpperCase() + riskClass.slice(1) + ' Risk';
+    document.getElementById('riskProb').textContent = `Return probability: ${pct}%`;
+    document.getElementById('probPct').textContent = `${pct}%`;
+    document.getElementById('probBar').className = `prob-bar-fill ${riskClass}`;
+    document.getElementById('probBar').style.width = `${pct}%`;
+    document.getElementById('verdictText').textContent = verdict;
+    document.getElementById('resultTime').textContent = new Date().toLocaleTimeString();
+
+    card.classList.add('visible');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── Reset ──
+  function resetForm() {
+    document.getElementById('resultCard').classList.remove('visible');
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('probBar').style.width = '0%';
+  }
+</script>
+</body>
+</html> 
